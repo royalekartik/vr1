@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Little Chemists — VR Periodic Table Adventure V4</title>
+<script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+<style>
+html,body{margin:0;background:#65c9ee;font-family:Arial,sans-serif;overflow:hidden;color:#18324a}
+#hud{position:fixed;z-index:10;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;gap:12px;pointer-events:none}
+.panel{background:#fffdf3;border:4px solid #18324a;border-radius:20px;box-shadow:0 6px 0 #18324a;padding:10px 16px;font-weight:900;pointer-events:auto}
+#brand{font-size:22px;line-height:1.05}#message{font-size:17px;margin-top:4px}#score{font-size:21px;color:#ef5572}
+#help{position:fixed;z-index:10;bottom:14px;left:50%;transform:translateX(-50%);font-size:16px;max-width:900px;text-align:center}
+button{border:3px solid #18324a;border-radius:12px;background:#8fe6a8;padding:8px 13px;font-weight:900;font-size:15px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="hud">
+  <div class="panel"><div id="brand">🧪🌈 LITTLE CHEMISTS</div><div id="message">Loading your science mission...</div></div>
+  <div class="panel">⭐ Score: <span id="score">0</span> &nbsp; • &nbsp; 🎯 Round: <span id="round">1</span>/12 &nbsp; <button id="reset">↻ Reset</button></div>
+</div>
+<div id="help" class="panel">🖱️ Desktop: click + drag an element to a slot. &nbsp; 🥽 VR: grab with the trigger, move your hand, release to snap.</div>
+<a-scene id="scene" background="color:#65c9ee" renderer="colorManagement:true;antialias:true" vr-mode-ui="enabled:true">
+  <a-entity light="type:ambient;intensity:2.2"></a-entity>
+  <a-entity light="type:directional;intensity:1.5" position="-4 8 4"></a-entity>
+
+  <!-- cheerful classroom -->
+  <a-plane rotation="-90 0 0" width="24" height="18" color="#ffe7a5"></a-plane>
+  <a-plane position="0 4.6 -8.5" width="23" height="10" color="#9ce7d8"></a-plane>
+  <a-plane position="0 3.05 -8.25" width="20.2" height="6.9" color="#fff7df"></a-plane>
+  <a-text value="PERIODIC TABLE OF ELEMENTS" position="0 5.55 -8.35" align="center" width="8.7" color="#5b3a8a"></a-text>
+  <a-text value="❓ = empty space — YOU decide where it belongs!" position="0 5.12 -8.35" align="center" width="6.5" color="#e85b72"></a-text>
+
+  <!-- cartoon stickers / mascots -->
+  <a-entity position="-8.2 4.8 -8.05">
+    <a-sphere radius=".52" color="#ffd166"></a-sphere><a-sphere position="-.17 .08 .45" radius=".055" color="#18324a"></a-sphere><a-sphere position=".17 .08 .45" radius=".055" color="#18324a"></a-sphere>
+    <a-torus position="0 -.12 .45" rotation="90 0 0" radius=".14" radius-tubular=".025" material="color:#ef5572"></a-torus>
+  </a-entity>
+  <a-text value="⭐" position="7.7 5.0 -8.0" width="3" align="center" color="#ffbd2e"></a-text>
+  <a-text value="🧪" position="-7.5 3.8 -8.05" width="2.4" align="center"></a-text>
+  <a-text value="🔬" position="7.4 3.8 -8.05" width="2.4" align="center"></a-text>
+  <a-text value="🌈" position="-6.6 5.6 -8.05" width="3" align="center"></a-text>
+  <a-text value="Be a curious scientist!" position="7.3 4.2 -8.0" width="2.8" align="center" color="#5b3a8a"></a-text>
+
+  <!-- table -->
+  <a-entity id="table" position="0 3.85 -8.0"></a-entity>
+
+  <!-- workbench -->
+  <a-box position="0 1.0 -3.5" width="18" height="2.8" depth=".8" color="#f5bf55"></a-box>
+  <a-box position="0 2.25 -3.92" width="16.8" height=".08" depth=".08" color="#7b5a32"></a-box>
+  <a-text value="🧩 GRAB AN ELEMENT — THEN PLACE IT!" position="0 2.25 -2.9" align="center" width="7.7" color="#18324a"></a-text>
+  <a-entity id="tray" position="0 1.02 -2.9"></a-entity>
+
+  <!-- cute scientist -->
+  <a-entity position="-8.0 1.55 -4.2">
+    <a-sphere position="0 .9 0" radius=".42" color="#ffd7b5"></a-sphere>
+    <a-sphere position="-.14 .98 .37" radius=".045" color="#18324a"></a-sphere><a-sphere position=".14 .98 .37" radius=".045" color="#18324a"></a-sphere>
+    <a-box position="0 .35 0" width=".9" height=".95" depth=".35" color="#fff"></a-box>
+    <a-text value="Hi, scientist!" position="0 -.25 .1" align="center" width="2.8" color="#5b3a8a"></a-text>
+  </a-entity>
+
+  <a-entity id="rig" position="0 1.65 2.8">
+    <a-camera id="camera" wasd-controls="acceleration:20" look-controls="pointerLockEnabled:false">
+      <a-cursor id="cursor" raycaster="objects:.interactive" fuse="false" color="#ef5572"></a-cursor>
+    </a-camera>
+  </a-entity>
+  <a-entity id="leftHand" laser-controls="hand:left" raycaster="objects:.interactive;far:12" line="color:#7b61ff;opacity:.85"></a-entity>
+  <a-entity id="rightHand" laser-controls="hand:right" raycaster="objects:.interactive;far:12" line="color:#ef5572;opacity:.85"></a-entity>
+</a-scene>
+<script>
+const E=[
+['H','Hydrogen',1,1,1],['He','Helium',2,18,1],['Li','Lithium',3,1,2],['Be','Beryllium',4,2,2],['B','Boron',5,13,2],['C','Carbon',6,14,2],['N','Nitrogen',7,15,2],['O','Oxygen',8,16,2],['F','Fluorine',9,17,2],['Ne','Neon',10,18,2],['Na','Sodium',11,1,3],['Mg','Magnesium',12,2,3],['Al','Aluminium',13,13,3],['Si','Silicon',14,14,3],['P','Phosphorus',15,15,3],['S','Sulfur',16,16,3],['Cl','Chlorine',17,17,3],['Ar','Argon',18,18,3],['K','Potassium',19,1,4],['Ca','Calcium',20,2,4],['Sc','Scandium',21,3,4],['Ti','Titanium',22,4,4],['V','Vanadium',23,5,4],['Cr','Chromium',24,6,4],['Mn','Manganese',25,7,4],['Fe','Iron',26,8,4],['Co','Cobalt',27,9,4],['Ni','Nickel',28,10,4],['Cu','Copper',29,11,4],['Zn','Zinc',30,12,4],['Ga','Gallium',31,13,4],['Ge','Germanium',32,14,4],['As','Arsenic',33,15,4],['Se','Selenium',34,16,4],['Br','Bromine',35,17,4],['Kr','Krypton',36,18,4],['Rb','Rubidium',37,1,5],['Sr','Strontium',38,2,5],['Y','Yttrium',39,3,5],['Zr','Zirconium',40,4,5],['Nb','Niobium',41,5,5],['Mo','Molybdenum',42,6,5],['Tc','Technetium',43,7,5],['Ru','Ruthenium',44,8,5],['Rh','Rhodium',45,9,5],['Pd','Palladium',46,10,5],['Ag','Silver',47,11,5],['Cd','Cadmium',48,12,5],['In','Indium',49,13,5],['Sn','Tin',50,14,5],['Sb','Antimony',51,15,5],['Te','Tellurium',52,16,5],['I','Iodine',53,17,5],['Xe','Xenon',54,18,5],['Cs','Cesium',55,1,6],['Ba','Barium',56,2,6],['La','Lanthanum',57,3,6],['Ce','Cerium',58,4,6],['Pr','Praseodymium',59,5,6],['Nd','Neodymium',60,6,6],['Pm','Promethium',61,7,6],['Sm','Samarium',62,8,6],['Eu','Europium',63,9,6],['Gd','Gadolinium',64,10,6],['Tb','Terbium',65,11,6],['Dy','Dysprosium',66,12,6],['Ho','Holmium',67,13,6],['Er','Erbium',68,14,6],['Tm','Thulium',69,15,6],['Yb','Ytterbium',70,16,6],['Lu','Lutetium',71,17,6],['Hf','Hafnium',72,4,6],['Ta','Tantalum',73,5,6],['W','Tungsten',74,6,6],['Re','Rhenium',75,7,6],['Os','Osmium',76,8,6],['Ir','Iridium',77,9,6],['Pt','Platinum',78,10,6],['Au','Gold',79,11,6],['Hg','Mercury',80,12,6],['Tl','Thallium',81,13,6],['Pb','Lead',82,14,6],['Bi','Bismuth',83,15,6],['Po','Polonium',84,16,6],['At','Astatine',85,17,6],['Rn','Radon',86,18,6],['Fr','Francium',87,1,7],['Ra','Radium',88,2,7],['Ac','Actinium',89,3,7],['Th','Thorium',90,4,7],['Pa','Protactinium',91,5,7],['U','Uranium',92,6,7],['Np','Neptunium',93,7,7],['Pu','Plutonium',94,8,7],['Am','Americium',95,9,7],['Cm','Curium',96,10,7],['Bk','Berkelium',97,11,7],['Cf','Californium',98,12,7],['Es','Einsteinium',99,13,7],['Fm','Fermium',100,14,7],['Md','Mendelevium',101,15,7],['No','Nobelium',102,16,7],['Lr','Lawrencium',103,17,7],['Rf','Rutherfordium',104,4,7],['Db','Dubnium',105,5,7],['Sg','Seaborgium',106,6,7],['Bh','Bohrium',107,7,7],['Hs','Hassium',108,8,7],['Mt','Meitnerium',109,9,7],['Ds','Darmstadtium',110,10,7],['Rg','Roentgenium',111,11,7],['Cn','Copernicium',112,12,7],['Nh','Nihonium',113,13,7],['Fl','Flerovium',114,14,7],['Mc','Moscovium',115,15,7],['Lv','Livermorium',116,16,7],['Ts','Tennessine',117,17,7],['Og','Oganesson',118,18,7]
+].map(x=>({symbol:x[0],name:x[1],number:x[2],group:x[3],period:x[4]}));
+const colors=['#ff8fab','#ffd166','#8ee3a8','#8edcf7','#b9a7ff','#ffb86b','#7de2d1'];
+const fSyms=new Set(['La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Ac','Th','Pa','U','Np','Pu','Am','Cm','Bk','Cf','Es','Fm','Md','No','Lr']);
+const table=document.querySelector('#table'), tray=document.querySelector('#tray'), scene=document.querySelector('#scene');
+const msg=document.querySelector('#message'), scoreEl=document.querySelector('#score'), roundEl=document.querySelector('#round');
+let score=0,round=0,current=null,grab=null,grabSource=null,grabOffset=null,desktopDragging=false;
+const challenges=[1,8,11,17,26,35,47,53,79,92,118,12];
+function makeBox(parent,pos,w,h,color,cls){let a=document.createElement('a-box');a.setAttribute('position',pos);a.setAttribute('width',w);a.setAttribute('height',h);a.setAttribute('depth','.18');a.setAttribute('color',color);a.classList.add(...cls.split(' '));parent.appendChild(a);return a}
+function makeText(parent,value,pos,width,size,color){let a=document.createElement('a-text');a.setAttribute('value',value);a.setAttribute('position',pos);a.setAttribute('align','center');a.setAttribute('anchor','center');a.setAttribute('baseline','center');a.setAttribute('width',width);a.setAttribute('color',color);a.setAttribute('wrap-count','18');parent.appendChild(a);return a}
+function makeTable(){const cw=.78,ch=.48; E.forEach(e=>{if(fSyms.has(e.symbol))return;let x=(e.group-9.5)*cw,y=(3.5-e.period)*ch,s=makeBox(table,`${x} ${y} 0`,cw-.035,ch-.035,'#fff','slot interactive');s.dataset.expected=e.symbol;makeText(s,'?',`0 0 .11`,1.5,1.35,'#9aa9b8').classList.add('qmark')});let f=E.filter(e=>fSyms.has(e.symbol));f.forEach((e,i)=>{let row=e.period===6?0:1,x=(i%15-7)*cw,y=(3.5-7)*ch-.35-row*.55,s=makeBox(table,`${x} ${y} 0`,cw-.035,ch-.035,'#fff','slot interactive');s.dataset.expected=e.symbol;makeText(s,'?',`0 0 .11`,1.5,1.35,'#9aa9b8').classList.add('qmark')})}
+function makeTray(){tray.innerHTML='';const target=current,pool=E.filter(e=>e.symbol!==target.symbol),seed=target.number*19+round*37,cards=[target];for(let i=0;i<17;i++)cards.push(pool[(seed+i*11)%pool.length]);for(let i=cards.length-1;i>0;i--){let j=(seed+i*7)%(i+1);[cards[i],cards[j]]=[cards[j],cards[i]]}cards.forEach((e,i)=>{let col=i%9,row=Math.floor(i/9),x=(col-4)*.86,y=1.28-row*.72,c=makeBox(tray,`${x} ${y} 0`,.72,.58,colors[(e.group+e.period)%colors.length],'element interactive');c.dataset.symbol=e.symbol;c.dataset.number=e.number;c.dataset.home=`${x} ${y} 0`;c.id='el-'+e.number;makeText(c,e.symbol,`0 0 .11`,1.65,1.35,'#18324a');makeText(c,String(e.number),`0 -.19 .11`,.7,.5,'#18324a');makeText(c,e.name,`0 -.31 .11`,1.5,.32,'#18324a')})}
+function getEl(n){return E.find(e=>e.number===n)}
+function say(text){msg.textContent=text}
+function startRound(){if(round>=challenges.length){say(`🏆 Super scientist! Final score: ${score}/${challenges.length*10}`);return}current=getEl(challenges[round]);roundEl.textContent=round+1;say(`🔎 Find ${current.name} (${current.symbol}) and place it in the empty table!`);makeTray()}
+function worldPos(el){const v=new THREE.Vector3();el.object3D.getWorldPosition(v);return v}
+function setWorldPos(el,v){const p=el.object3D.parent;const local=p.worldToLocal(v.clone());el.object3D.position.copy(local)}
+function slotWorld(s){return worldPos(s)}
+function nearestSlot(v){let best=null,bd=Infinity;document.querySelectorAll('.slot').forEach(s=>{let d=slotWorld(s).distanceTo(v);if(d<bd){bd=d;best=s}});return {slot:best,d:bd}}
+function addPlacedText(s,e){s.setAttribute('color','#8ee3a8');let q=s.querySelector('.qmark');if(q)q.remove();makeText(s,e.symbol,`0 0 .12`,1.5,1.25,'#18324a');makeText(s,String(e.number),`0 -.17 .12`,.7,.5,'#18324a')}
+function returnToTray(card){let home=(card.dataset.home||'0 0 0').split(' ').map(Number);const trayPos=worldPos(tray);setWorldPos(card,new THREE.Vector3(trayPos.x+home[0],trayPos.y+home[1],trayPos.z+home[2]));card.setAttribute('scale','1 1 1');card.setAttribute('color',colors[(getEl(+card.dataset.number).group+getEl(+card.dataset.number).period)%colors.length])}
+function correct(card,slot){let e=getEl(+card.dataset.number);const p=slotWorld(slot);scene.object3D.attach(card.object3D);setWorldPos(card,new THREE.Vector3(p.x,p.y,p.z+.25));card.setAttribute('scale','1.12 1.12 1.12');card.setAttribute('color','#8ee3a8');addPlacedText(slot,e);score+=10;scoreEl.textContent=score;playSuccess();say(`🌟 Great job! ${e.name} belongs in Group ${e.group}, Period ${e.period}.`);setTimeout(()=>{round++;startRound()},1100)}
+function drop(card){if(!card)return;const pos=worldPos(card);scene.object3D.attach(card.object3D);setWorldPos(card,pos);const n=nearestSlot(pos);if(n.slot&&n.d<.7){if(n.slot.dataset.expected===card.dataset.symbol){correct(card,n.slot);return}playWrong();say(`💡 Not quite! ${current.name} belongs somewhere else. Try again!`)}else{say(`🧠 Move ${current.name} closer to a table slot.`)}returnToTray(card)}
+function grabCard(card,source){if(!card||card.dataset.placed==='true')return;grab=card;grabSource=source;card.setAttribute('scale','1.18 1.18 1.18');card.setAttribute('color','#fff');if(source){source.object3D.attach(card.object3D);card.object3D.position.set(0,0,-.55)}else desktopDragging=true}
+function release(){if(!grab)return;let c=grab;grab=null;desktopDragging=false;drop(c)}
+function setupVRHand(hand){hand.addEventListener('triggerdown',()=>{let hits=hand.components.raycaster?.intersections||[],hit=hits.find(i=>i.object?.el?.classList.contains('element')||i.object?.el?.classList.contains('slot'));if(!hit)return;let el=hit.object.el;if(el.classList.contains('element'))grabCard(el,hand);else if(el.classList.contains('slot')&&grab)drop(grab)});hand.addEventListener('triggerup',release)}
+setupVRHand(document.querySelector('#leftHand'));setupVRHand(document.querySelector('#rightHand'));
+// Desktop: true click-and-drag using a camera-facing plane.
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2(),dragPlane=new THREE.Plane(new THREE.Vector3(0,0,1),8),hitPoint=new THREE.Vector3();
+scene.addEventListener('loaded',()=>{const canvas=scene.canvas,camEl=document.querySelector('#camera');canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camEl.getObject3D('camera'));const hits=ray.intersectObjects(scene.object3D.children,true);const found=hits.find(h=>h.object.el?.classList.contains('element'));if(found){grabCard(found.object.el,null);canvas.setPointerCapture(e.pointerId);camEl.setAttribute('look-controls','enabled',false)}});canvas.addEventListener('pointermove',e=>{if(!desktopDragging||!grab)return;const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camEl.getObject3D('camera'));if(ray.ray.intersectPlane(dragPlane,hitPoint))setWorldPos(grab,hitPoint)});canvas.addEventListener('pointerup',e=>{if(desktopDragging){canvas.releasePointerCapture(e.pointerId);release();camEl.setAttribute('look-controls','enabled',true)}})});
+// Slot click fallback for accessibility/testing.
+document.addEventListener('click',e=>{let t=e.target.closest?.('.slot');if(t&&grab)drop(grab)});
+function playTone(freq,dur,type='sine'){const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(.12,c.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+dur);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+dur+.03)}
+function playSuccess(){playTone(660,.12);setTimeout(()=>playTone(880,.16),120)}function playWrong(){playTone(180,.18,'square')}
+document.querySelector('#reset').onclick=()=>location.reload();makeTable();startRound();
+</script>
+</body></html>
